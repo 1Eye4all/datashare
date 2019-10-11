@@ -24,10 +24,8 @@ import org.icij.datashare.text.indexing.LanguageGuesser;
 import org.icij.datashare.text.indexing.elasticsearch.ElasticsearchIndexer;
 import org.icij.datashare.text.indexing.elasticsearch.language.OptimaizeLanguageGuesser;
 import org.icij.datashare.web.ConfigResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.icij.datashare.web.RootResource;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -37,7 +35,6 @@ import static org.icij.datashare.text.indexing.elasticsearch.ElasticsearchConfig
 
 public class CommonMode extends AbstractModule {
     protected final PropertiesProvider propertiesProvider;
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected CommonMode(Properties properties) {
         propertiesProvider = properties == null ? new PropertiesProvider() : new PropertiesProvider().mergeWith(properties);
@@ -101,8 +98,7 @@ public class CommonMode extends AbstractModule {
 
     private Routes defaultRoutes(final Routes routes, PropertiesProvider provider) {
         routes.setIocAdapter(new GuiceAdapter(this))
-                .get("/version", getVersion())
-                .get("/config", getConfig())
+                .add(RootResource.class)
                 .add(ConfigResource.class)
                 .setExtensions(new Extensions() {
                     @Override
@@ -120,19 +116,5 @@ public class CommonMode extends AbstractModule {
             routes.filter(new CorsFilter(cors));
         }
         return routes;
-    }
-
-    private Map<String, Object> getConfig() {
-        return propertiesProvider.getFilteredProperties(".*Address.*", ".*Secret.*");
-    }
-
-    private Properties getVersion() {
-        try {
-            Properties properties = new Properties();
-            properties.load(getClass().getResourceAsStream("/git.properties"));
-            return properties;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
